@@ -9,6 +9,7 @@ python-rtmidi ="*"
 tk = "*"
 pydantic = "*"
 numpy = "*"
+sounddevice = "*"
 
 [scripts]
 run = "python app.py"
