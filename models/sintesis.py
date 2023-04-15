@@ -1,15 +1,25 @@
 import numpy as np
+
 from globals import SRATE
+from models.note import Note
 
 
-def KarplusStrong(frec, dur):
-    N = SRATE // int(frec)  # la frecuencia determina el tamanio del buffer
-    buf = np.random.rand(N) * 2 - 1  # buffer inicial: ruido
-    nSamples = int(dur * SRATE)
-    samples = np.empty(nSamples, dtype=float)  # salida
-    # generamos los nSamples haciendo recorrido circular por el buffer
-    for i in range(nSamples):
-        samples[i] = buf[i % N]  # recorrido de buffer circular
-        buf[i % N] = 0.5 * (buf[i % N] + buf[(1 + i) % N])  # filtrado
+# - Para empezar, tal como os conté en clase, la nota depende del tamaño del buffer de entrada. Este tamaño es un entero, así que para sacar frecuencias no enteras hay que buscar soluciones.
+# - El algoritmo que os enseñe aplica un filtro LP elemental al buffer. Investigar otros filtros.
+# - El sonido de cuerda que produce KS es "muy seco" (sin caja de resonancia). Podéis colorearlo simulando algún tipo de resonancia, reverb u otro efecto. Se puede también añadir algo de desafinación (chorus) para hacerlo más realista.
+# - Es posible simular una cuerda frotada variando este algoritmo.
 
-    return samples
+
+class KarplusStrong:
+
+    def transform(self, note: Note):
+        n = SRATE // int(note.frequency)  # la frecuencia determina el tamanio del buffer
+        buf = np.random.rand(n) * 2 - 1  # buffer inicial: ruido
+        nSamples = int(note.duration * SRATE)
+        samples = np.empty(nSamples, dtype=float)  # salida
+        # generamos los nSamples haciendo recorrido circular por el buffer
+        for i in range(nSamples):
+            samples[i] = buf[i % n]  # recorrido de buffer circular
+            buf[i % n] = 0.5 * (buf[i % n] + buf[(1 + i) % n])  # filtrado
+
+        return samples.astype(np.float32)

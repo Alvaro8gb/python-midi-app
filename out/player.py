@@ -4,7 +4,7 @@ from globals import SRATE, CHUNK
 
 
 class Player:
-    def __int__(self):
+    def __init__(self):
         self.stream = sd.OutputStream(samplerate=SRATE, blocksize=CHUNK,
                                       channels=1)
 

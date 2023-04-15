@@ -11,7 +11,6 @@ KEY_COLORS = ["white", "black", "white", "black", "white", "white", "black",
               "white", "black", "white", "black", "white", "white", "black",
               "white"]
 
-
 class Piano:
     def __init__(self, master):
         # Crea el lienzo en el que se dibujarán las teclas  

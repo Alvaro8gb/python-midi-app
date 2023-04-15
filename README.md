@@ -3,7 +3,7 @@
 ## 1. Interfaz
 [folder](UX-UI)
 ## 2. Teclado Midi
-[folder](in)
+[folder](input)
 
 ## 3. Logica ( Modelos)
 [folder](models)
