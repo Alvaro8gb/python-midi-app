@@ -3,21 +3,40 @@ import mido
 """ 
 Se conecta al primer controlador MIDI y escribe mensajes interrumpidamente
 """
+import queue
+import threading
+
+notes_queue = queue.Queue()
+pressed_keys = {}
+lock = threading.Lock()
 
 
-class MidiReader():
+def callback(msg):
+    #print(msg)
+    with lock:
+        if msg.type == 'note_on':
+            pressed_keys[msg.note] = msg.velocity
+        elif msg.type == 'note_off':
+            pressed_keys.pop(msg.note, None)
+        else:
+            "Otros tipos de mensajes no se hace nada con ellos"
+            pass
+
+
+class MidiReader:
 
     def __init__(self):
-
         midi_devices = mido.get_input_names()
         print(midi_devices)
 
         if len(midi_devices) == 0:
             raise Exception("No midi devices found")
 
-        self.input_device = mido.open_input(midi_devices[0])
+        self.input_device = mido.open_input(midi_devices[0], callback=callback)
+
     def getDevice(self):
         return self.input_device
+
 
 def midi2freq(nota_midi):
     """
@@ -26,4 +45,3 @@ def midi2freq(nota_midi):
     La nota 127 tiene frecuencia 12,54 KHz
     """
     return 2 ** ((nota_midi - 69) / 12) * 440
-
