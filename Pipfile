@@ -10,6 +10,7 @@ tk = "*"
 pydantic = "*"
 numpy = "*"
 sounddevice = "*"
+scipy = "*"
 
 [scripts]
 run = "python app.py"

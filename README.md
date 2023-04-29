@@ -10,3 +10,6 @@
 
 ## 4. Reproductor de audio 
 [folder](out)
+
+
+## 5. Controlador entre in y out
