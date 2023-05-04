@@ -30,8 +30,13 @@ class Sampler(NoteBase):
 
             s = Spliter()
 
-            attack, sustain, release = s.split(sample)
+            attack, release = s.split(sample)
 
+            # Calculamos el sustain de la nota
+            start_index, end_index = self.detect_sustain(sample)
+            sustain = sample[start_index, end_index]
+
+            # Hacemos que el buffer simplemente contenga el sustain calculado previamente
             self.buffer = sustain
 
 
@@ -62,6 +67,19 @@ class Sampler(NoteBase):
                     samples[octave] = sample
 
         return samples
+
+    def detect_sustain(sample, threshold=0.1):
+        # Busca el primer índice donde la amplitud supera el umbral
+        start_index = next((i for i, x in enumerate(sample) if abs(x) > threshold), None)
+
+        # Busca el último índice donde la amplitud supera el umbral
+        end_index = next((i for i, x in enumerate(reversed(sample)) if abs(x) > threshold), None)
+
+        # Invierte el índice final para obtener su posición en el array original
+        if end_index is not None:
+            end_index = len(sample) - end_index - 1
+
+        return start_index, end_index
 
     def next(self):
         if self.buffer is None:
