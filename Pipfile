@@ -11,6 +11,8 @@ pydantic = "*"
 numpy = "*"
 sounddevice = "*"
 scipy = "*"
+soundfile = "*"
+
 
 [scripts]
 run = "python app.py"

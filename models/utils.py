@@ -1,13 +1,10 @@
 from itertools import zip_longest
 import numpy as np
-from globals import CHUNK
-
-ATACK_R = 0.1
-SUSTAIN_R = 0.8
-RELEASE_R = 0.1
+from globals import CHUNK, ATACK_R, SUSTAIN_R, RELEASE_R
 
 
 class Chunker:
+
     def group_elements(self, n, iterable, padvalue=0):
         return zip_longest(*[iter(iterable)] * n, fillvalue=padvalue)
 
@@ -29,3 +26,4 @@ class Spliter:
         release = samples[-n_release:]
 
         return attack, sustain, release
+

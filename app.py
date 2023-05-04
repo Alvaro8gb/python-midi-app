@@ -1,12 +1,15 @@
+import concurrent.futures
+
 from input.midi import MidiReader
 from out.player import Player
 
 from input.midi import playing_keys, lock
 
-import concurrent.futures
-
-# Definir una función para el cálculo de los chunks en paralelo
 def calculate_chunk(s):
+    """
+    función para el cálculo de los chunks en paralelo
+
+    """
     return s.next()
 
 if __name__ == '__main__':
@@ -34,5 +37,5 @@ if __name__ == '__main__':
             chunks = [future.result() for future in concurrent.futures.as_completed(chunk_futures)]
 
         if len(chunks) > 0:
-            print("Playing")
+            #print("Playing")
             player.play(sum(chunks))

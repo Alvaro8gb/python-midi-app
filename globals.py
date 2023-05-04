@@ -1,6 +1,9 @@
 SRATE = 44100
 CHUNK = 512
 DECAY = 0.98
-# Cambiar a mapeo con MIDI
+ATACK_R = 0.1
+SUSTAIN_R = 0.8
+RELEASE_R = 0.1
+
 NOTAS = dict(C=523.241, D=587.33, E=659.255, F=698.56, G=783.991,
              A=880, B=987.767)

@@ -1,10 +1,8 @@
 import numpy as np
+from math import pow
 from globals import SRATE, CHUNK, DECAY
-from models.note import Note
-from out.player import Player
-from models.utils import Chunker
 from models.efects import reverb, chorus
-
+from models.NoteFactory import Note
 
 # - Para empezar, tal como os conté en clase, la nota depende del tamaño del buffer de entrada. Este tamaño es un entero, así que para sacar frecuencias no enteras hay que buscar soluciones.
 # - El algoritmo que os enseñe aplica un filtro LP elemental al buffer. Investigar otros filtros.
@@ -12,12 +10,14 @@ from models.efects import reverb, chorus
 # Se puede también añadir algo de desafinación (chorus) para hacerlo más realista.
 # - Es posible simular una cuerda frotada variando este algoritmo.
 
+from models.NoteFactory import NoteBase
+
 
 class KarplusStrong:
 
     def transform(self, note: Note):
         n = SRATE // int(note.frequency)  # la frecuencia determina el tamaño del buffer
-        buf = np.random.rand(n) * 2 - 1  # buffer inicial: ruido
+        buf = np.random.uniform(-1, 1, n)  # buffer inicial: ruido
         nSamples = int(note.duration * SRATE)
         samples = np.empty(nSamples, dtype="float32")  # salida
 
@@ -25,7 +25,7 @@ class KarplusStrong:
         a = 0.5  # Factor de suavizado del filtro
         b = 1 - a  # Factor de conservación del filtro
 
-        pluck_factor = 0.5 # simular cuerda frotada
+        pluck_factor = 0.5  # simular cuerda frotada
 
         # Aplicar el punteo inicial
         buf[int(n * pluck_factor)] = np.random.rand() * 2 - 1
@@ -42,9 +42,10 @@ class KarplusStrong:
         samples = reverb(samples)
         samples, voices = chorus(samples)
 
-        samples =+ sum(voices)
+        samples = + sum(voices)
 
         return samples
+
 
 """
 
@@ -68,23 +69,44 @@ Finalmente, el valor actual del filtro de retardo de línea (current_sample) se 
 """
 
 
-class Synthesizer:
-    def __init__(self, desire_frequency, velocity):
+class Synthesizer(NoteBase):
+    velocity_hold = 60
 
-        self.buff_size = SRATE // int(desire_frequency)
+    def __init__(self, note: Note):
+
+        super().__init__()
+        self.buff_size = SRATE // int(note.frequency)
         self.buffer = np.random.rand(self.buff_size) * 2 - 1  # buffer inicial Ruido
         self.loop = True
         self.pointer = 0
         self.state = "attack"
-        self.attack_time = self.calculate_attack_time(velocity)
+        self.attack_time = self.calculate_attack_time()
+
         print(self.attack_time)
 
         # Parámetros del filtro
         self.a = 0.4  # Factor de suavizado del filtro
         self.b = 1 - self.a  # Factor de conservación del filtro
 
-    def calculate_attack_time(self, velocity):
-        ATTACK_TIME = 0.1
+        attenuation = Synthesizer.get_attenuation(note.velocity)  # Aplicar atenuacion dependiendo de la velocidad
+
+        print(attenuation)
+        self.buffer *= attenuation
+
+    @staticmethod
+    def get_attenuation(value):
+
+        limit = Synthesizer.velocity_hold + 20
+        if value <= Synthesizer.velocity_hold:
+            return value / limit  # Mapear los valores de 0 a 50 linealmente a un rango de 0 a 0.75
+        elif value > 127:
+            return 1.0
+        else: # mapeo exponencial
+            return Synthesizer.velocity_hold / limit + (
+                        0.25 * pow((value - Synthesizer.velocity_hold) / (127 - Synthesizer.velocity_hold), 2))
+
+    def calculate_attack_time(self):
+        ATTACK_TIME = 0.3
 
         attack_samples = int(ATTACK_TIME * SRATE)  # Número de muestras en el tiempo de ataque
 
@@ -92,7 +114,7 @@ class Synthesizer:
         attack_factor = self.buff_size / attack_samples
 
         # Utiliza el factor de ataque para ajustar el tiempo de ataque según la frecuencia de la nota
-        return int(attack_factor * attack_samples) + velocity
+        return int(attack_factor * attack_samples)
 
     def note_off(self):
         self.loop = True
@@ -100,7 +122,7 @@ class Synthesizer:
 
     def next(self):
 
-        output = np.empty(CHUNK, dtype="float32")
+        chunk = np.empty(CHUNK, dtype="float32")
 
         for i in range(CHUNK):
             # Leer el valor actual del buffer
@@ -113,61 +135,64 @@ class Synthesizer:
 
                 self.attack_time -= 1
 
-            #elif self.sustain_time > 0:
+            # elif self.sustain_time > 0:
             #    last_sample = self.buffer[(self.pointer - 1) % self.buff_size]
-#
+            #
             #    self.buffer[self.pointer] = DECAY * last_sample
-#
+            #
             #    self.sustain_time -= 1
-            #else:
+            # else:
             #    self.buffer[self.pointer] = DECAY * self.buffer[self.pointer]
 
-            output[i] = current_sample
+            chunk[i] = current_sample
 
             self.pointer = (self.pointer + 1) % self.buff_size
 
-        #output = reverb(output)
+        # output = reverb(output)
 
-        return output
-
+        return chunk
 
 
 ## Pruebas
 
-from globals import NOTAS
+def finetune(note):
+    # Calculate the length of the buffer
+    buffer_length = int(round(note.duration * note.frequency))
 
-def static(p):
-    chunker = Chunker()
-    m = KarplusStrong()
+    # Generate random noise for the buffer
+    buffer = np.random.uniform(-1, 1, buffer_length)
 
-    notes = [m.transform(Note(frequency=NOTAS["C"], duration=3, note=2)),
-             m.transform(Note(frequency=NOTAS["B"], duration=1, note=2))
-             ]
+    # Create a delay line with fractional delay
+    delay = int(note.frequency)
+    delay_fractional = note.frequency - delay
+    buffer_length_padded = buffer_length + delay
+    delay_line = np.zeros(buffer_length_padded)
 
-    for n in notes:
-        for c in chunker.chunkerize(n):
-            p.play(c)
+    # Create an output signal
+    output = np.zeros(buffer_length)
 
-def continuos(p):
-    i = 0
+    for i in range(buffer_length):
+        # Get the current sample from the delay line
+        current_sample = buffer[i]
 
-    while True:
-        p.play(m.next())
-        i += 1
+        # Calculate the index for the fractional delay
+        index = int(i + delay)
 
-        if i == 10000:
-            print("NOte off")
-            m.note_off()
-            break
+        # Wrap the index around if it exceeds the size of the delay line
+        index %= buffer_length_padded
 
-    p.play(m.next())
+        # Interpolate between the current and delayed samples
+        interpolated_sample = (1 - delay_fractional) * delay_line[index] + delay_fractional * delay_line[
+            (index + 1) % buffer_length_padded]
 
+        # Calculate the output sample
+        output_sample = DECAY * 0.5 * (current_sample + interpolated_sample)
 
-if __name__ == '__main__':
-    m = Synthesizer(NOTAS["C"], 100)
+        # Store the output sample
+        output[i] = output_sample
 
-    p = Player()
-    p.start()
+        # Update the delay line
+        delay_line = np.roll(delay_line, -1)
+        delay_line[-1] = output_sample
 
-    static(p)
-    p.close()
+    return output

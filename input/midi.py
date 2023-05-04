@@ -6,6 +6,7 @@ Se conecta al primer controlador MIDI y escribe mensajes interrumpidamente
 import queue
 import threading
 
+from controller import create_note_factor
 from models.sintesis import Synthesizer
 
 notes_queue = queue.Queue()
@@ -17,7 +18,12 @@ def callback(msg):
     print(msg)
     with lock:
         if msg.type == 'note_on':
-            playing_keys[msg.note] = Synthesizer(midi2freq(msg.note), msg.velocity)
+
+            if msg.velocity == 0:
+                playing_keys[msg.note] = None
+            else:
+                playing_keys[msg.note] = create_note_factor(msg.note, msg.velocity)
+
         elif msg.type == 'note_off':
             playing_keys[msg.note] = None
         else:
@@ -38,14 +44,6 @@ class MidiReader:
     def getDevice(self):
         return self.input_device
 
-
-def midi2freq(nota_midi):
-    """
-    Midi consta de 128 notas de [0-127]
-    La nota 0 tiene frecuencia 8.17 Hz
-    La nota 127 tiene frecuencia 12,54 KHz
-    """
-    return 2 ** ((nota_midi - 69) / 12) * 440
 
 
 """ MIDI 

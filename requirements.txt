@@ -1,0 +1,5 @@
+sounddevice~=0.4.6
+mido~=1.2.10
+numpy~=1.24.3
+soundfile~=0.12.1
+pydantic~=1.10.7

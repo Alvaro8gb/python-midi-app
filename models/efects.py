@@ -1,4 +1,5 @@
 from globals import SRATE
+from models.utils import Spliter
 import numpy as np
 
 def reverb(signal, delay=1, decay=0.5):
@@ -76,3 +77,25 @@ def chorus(signal, delay=0.03, depth=0.003, rate=1.5, feedback=0.3):
     signal /= np.max(np.abs(signal))
 
     return signal, voices
+
+def envelope(signal):
+    s = Spliter()
+    length = len(signal)
+    attack_samples, sustain_samples, release_samples = s.split(signal)
+
+    # Calcular los índices de los segmentos de ataque, sostenimiento y liberación
+    attack_end = min(attack_samples, length)
+    sustain_end = min(attack_samples + sustain_samples, length)
+    release_start = max(length - release_samples, 0)
+
+    # Calcular las ganancias para cada segmento
+    attack_gain = np.linspace(0, 1, attack_end)
+    sustain_gain = np.ones(sustain_end - attack_end)
+    release_gain = np.linspace(1, 0, length - release_start)
+
+    # Aplicar las ganancias al chunk
+    signal[:attack_end] *= attack_gain
+    signal[attack_end:sustain_end] *= sustain_gain
+    signal[release_start:] *= release_gain
+
+    return signal
