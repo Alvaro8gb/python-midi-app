@@ -1,6 +1,9 @@
-from itertools import zip_longest
 import numpy as np
-from globals import CHUNK, ATACK_R, SUSTAIN_R, RELEASE_R
+import scipy.signal as signal
+
+from globals import CHUNK
+from itertools import zip_longest
+
 
 
 class Chunker:
@@ -14,16 +17,20 @@ class Chunker:
 
 class Spliter:
 
-    def split(self, samples):
+    def split(self, sample):
         # Calcular el tamaño de cada fragmento
-        n_attact = int(len(samples) * ATACK_R)  # 10%
-        n_sustain = int(len(samples) * SUSTAIN_R)  # 80%
-        n_release = int(len(samples) * RELEASE_R)
+        envelope = np.abs(signal.hilbert(sample))
 
-        # Dividir el array en tres fragmentos
-        attack = samples[:n_attact]
-        sustain = samples[n_attact:n_attact + n_sustain]
-        release = samples[-n_release:]
+        # Establecemos un umbral para detectar el inicio y el final del sustain
+        threshold = 0.1 * np.max(envelope)
+        start_index = np.argmax(envelope > threshold)
+        end_index = len(envelope) - np.argmax(envelope[::-1] > threshold)
+
+        # Extraemos el sustain del sample
+        attack = sample[:start_index]
+        sustain = sample[start_index:end_index]
+        release = sample[end_index:]
+
 
         return attack, sustain, release
 

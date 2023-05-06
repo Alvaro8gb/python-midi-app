@@ -1,5 +1,12 @@
-sounddevice~=0.4.6
-mido~=1.2.10
-numpy~=1.24.3
-soundfile~=0.12.1
-pydantic~=1.10.7
+-i https://pypi.org/simple
+cffi==1.15.1
+mido==1.2.10
+numpy==1.24.3
+pycparser==2.21
+pydantic==1.10.7
+python-rtmidi==1.4.9
+scipy==1.10.1
+sounddevice==0.4.6
+soundfile==0.12.1
+tk==0.1.0
+typing-extensions==4.5.0 ; python_version >= '3.7'

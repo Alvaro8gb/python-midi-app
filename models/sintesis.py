@@ -1,16 +1,8 @@
 import numpy as np
 from math import pow
-from globals import SRATE, CHUNK, DECAY
+from globals import SRATE, DECAY
 from models.efects import reverb, chorus
-from models.NoteFactory import Note
-
-# - Para empezar, tal como os conté en clase, la nota depende del tamaño del buffer de entrada. Este tamaño es un entero, así que para sacar frecuencias no enteras hay que buscar soluciones.
-# - El algoritmo que os enseñe aplica un filtro LP elemental al buffer. Investigar otros filtros.
-# - El sonido de cuerda que produce KS es "muy seco" (sin caja de resonancia). Podéis colorearlo simulando algún tipo de resonancia, reverb u otro efecto.
-# Se puede también añadir algo de desafinación (chorus) para hacerlo más realista.
-# - Es posible simular una cuerda frotada variando este algoritmo.
-
-from models.NoteFactory import NoteBase
+from models.NoteFactory import Note, NoteBase
 
 
 class KarplusStrong:
@@ -33,12 +25,10 @@ class KarplusStrong:
         # Generamos los nSamples haciendo recorrido circular por el buffer
         for i in range(nSamples):
             samples[i] = buf[i % n]  # Recorrido de buffer circular
+            buf[i % n] = a * buf[i % n] + b * buf[(1 + i) % n] # Filtrado del buffer
 
-            # Filtrado del buffer
-            buf[i % n] = a * buf[i % n] + b * buf[(1 + i) % n]
 
         # Aplicar efectos
-
         samples = reverb(samples)
         samples, voices = chorus(samples)
 
@@ -72,11 +62,12 @@ Finalmente, el valor actual del filtro de retardo de línea (current_sample) se 
 class Synthesizer(NoteBase):
     velocity_hold = 60
 
-    def __init__(self, note: Note):
+    def __init__(self, note: Note, chunk_size):
 
-        super().__init__()
+        super().__init__(chunk_size)
+
         self.buff_size = SRATE // int(note.frequency)
-        self.buffer = np.random.rand(self.buff_size) * 2 - 1  # buffer inicial Ruido
+        self.buffer = np.random.uniform(-1, 1, self.buff_size) # buffer inicial Ruido
         self.loop = True
         self.pointer = 0
         self.state = "attack"
@@ -88,9 +79,8 @@ class Synthesizer(NoteBase):
         self.a = 0.4  # Factor de suavizado del filtro
         self.b = 1 - self.a  # Factor de conservación del filtro
 
-        attenuation = Synthesizer.get_attenuation(note.velocity)  # Aplicar atenuacion dependiendo de la velocidad
-
-        print(attenuation)
+        # Aplicar atenuacion dependiendo de la velocidad
+        attenuation = Synthesizer.get_attenuation(note.velocity)
         self.buffer *= attenuation
 
     @staticmethod
@@ -98,7 +88,7 @@ class Synthesizer(NoteBase):
 
         limit = Synthesizer.velocity_hold + 20
         if value <= Synthesizer.velocity_hold:
-            return value / limit  # Mapear los valores de 0 a 50 linealmente a un rango de 0 a 0.75
+            return value / limit  # Mapear los valores de 0 a velocity_hold linealmente
         elif value > 127:
             return 1.0
         else: # mapeo exponencial
@@ -122,9 +112,9 @@ class Synthesizer(NoteBase):
 
     def next(self):
 
-        chunk = np.empty(CHUNK, dtype="float32")
+        chunk = np.empty(self.chunk_size, dtype="float32")
 
-        for i in range(CHUNK):
+        for i in range(self.chunk_size):
             # Leer el valor actual del buffer
             current_sample = self.buffer[self.pointer]
 

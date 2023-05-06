@@ -9,6 +9,8 @@ WINDOW_HEIGHT = 300
 KEY_WIDTH = WINDOW_WIDTH // 14
 KEY_HEIGHT = int(WINDOW_HEIGHT * 0.75)
 
+BUFFERS_SIZE = (64,256,512)
+
 # Define la lista de colores de las teclas  
 midi_to_chord2 = {
     0: 'C',
@@ -57,7 +59,7 @@ class Piano:
         mode_button.place(x=540, y=100)
         tk.Label(self.canvas, text="chunk:", bg="white").place(x=520, y=40)
 
-        self.spinbox = tk.Spinbox(root,values=(64,256,512),width=15,command=self.on_spinbox_change)
+        self.spinbox = tk.Spinbox(root, values= [str(size) for size in  BUFFERS_SIZE], width=15,command=self.on_spinbox_change)
         self.spinbox.place(x=540, y=70)
 
     def run(self):

@@ -1,3 +1,5 @@
+import matplotlib.pyplot as plt
+
 from globals import NOTAS
 from out.player import Player
 from models.utils import Chunker
@@ -8,8 +10,10 @@ def static(p):
     chunker = Chunker()
     m = KarplusStrong()
 
-    notes = [ m.transform(Note(frequency=NOTAS["C"], duration=3, note=2)),
-             m.transform(Note(frequency=NOTAS["B"], duration=1, note=2))
+    plt.plot(m.transform(Note(frequency=NOTAS["C"], duration=3, note=2, velocity=50)))
+    plt.savefig("onda")
+    notes = [ m.transform(Note(frequency=NOTAS["C"], duration=3, note=2, velocity=50)),
+             m.transform(Note(frequency=NOTAS["B"], duration=1, note=2, velocity=50))
              ]
 
     for n in notes:
@@ -33,7 +37,6 @@ def continuos(p):
 
 
 if __name__ == '__main__':
-    m = Synthesizer(NOTAS["C"], 100)
 
     p = Player()
     p.start()

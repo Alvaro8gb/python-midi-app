@@ -1,49 +1,41 @@
 import mido
 
-""" 
-Se conecta al primer controlador MIDI y escribe mensajes interrumpidamente
-"""
-import queue
-import threading
+class MidiReader():
 
-from controller import create_note_factor
-from models.sintesis import Synthesizer
+    def __init__(self, controller):
+        self.midi_devices = mido.get_input_names()
+        self.controller = controller
+        self.running = False
 
-notes_queue = queue.Queue()
-playing_keys = {}
-lock = threading.Lock()
-
-
-def callback(msg):
-    print(msg)
-    with lock:
-        if msg.type == 'note_on':
-
-            if msg.velocity == 0:
-                playing_keys[msg.note] = None
-            else:
-                playing_keys[msg.note] = create_note_factor(msg.note, msg.velocity)
-
-        elif msg.type == 'note_off':
-            playing_keys[msg.note] = None
-        else:
-            "Otros tipos de mensajes no se hace nada con ellos"
-            pass
-
-class MidiReader:
-
-    def __init__(self):
-        midi_devices = mido.get_input_names()
-        print(midi_devices)
-
-        if len(midi_devices) == 0:
+        if len(self.midi_devices) == 0:
             raise Exception("No midi devices found")
 
-        self.input_device = mido.open_input(midi_devices[1], callback=callback)
+        self.input_device = None
 
-    def getDevice(self):
-        return self.input_device
+    def open(self, midi_device:str):
+        self.input_device = mido.open_input(midi_device, callback= self.run)
 
+    def close(self):
+        if self.input_device is not None:
+            self.input_device.close()
+            self.input_device = None
+
+            print("Midi close")
+
+
+    def run(self, msg):
+
+        print(msg)
+        if msg.type == 'note_on':
+            if msg.velocity == 0:
+                self.controller.note_off(msg)
+            else:
+                self.controller.note_on(msg)
+
+        elif msg.type == 'note_off':
+            self.controller.note_off(msg)
+        else:
+            pass
 
 
 """ MIDI 
