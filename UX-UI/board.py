@@ -1,4 +1,3 @@
-import math
 import tkinter as tk
 import tkinter.messagebox as messagebox
 import mido
@@ -25,16 +24,19 @@ midi_to_chord2 = {
     10: 'A#',
     11: 'B'
 }
+
+
 class Piano:
     def __init__(self, master):
         # Crea el lienzo en el que se dibujarán las teclas
         self.KEY_COLORS = ["white", "black", "white", "black", "white", "white", "black",
-                      "white", "black", "white", "black", "white"]
+                           "white", "black", "white", "black", "white"]
         self.canvas = tk.Canvas(master, width=WINDOW_WIDTH,
                                 height=WINDOW_HEIGHT)
         self.canvas.pack()
         self.key_status = {}
-        self.labels=[]
+        self.labels = []
+        self.input_device = None
         # Crea los botones para cada tecla y los almacena en una lista  
         self.buttons = []
         for i in range(len(self.KEY_COLORS)):
@@ -45,75 +47,117 @@ class Piano:
                                borderwidth=1, highlightthickness=3, highlightbackground="black")
             button.place(x=x, y=y, width=KEY_WIDTH, height=KEY_HEIGHT)
             label = tk.Label(self.canvas, text="", bg="white")
-            label.place(x=x, y=y + KEY_HEIGHT)
+            label.place(x=x+17, y=y + KEY_HEIGHT)
             self.buttons.append(button)
             self.labels.append(label)
             self.key_status[i] = False
-        connect_button = tk.Button(master, text="Conectar MIDI", command=self.connect)
+        connect_button = tk.Button(master, text="Conectar MIDI", command=self.mostrar_desplegable)
         connect_button.place(x=540, y=0)
+        mode_button = tk.Button(master, text="Modo", command=self.mostrar_desplegable_modo)
+        mode_button.place(x=540, y=100)
+        tk.Label(self.canvas, text="chunk:", bg="white").place(x=520, y=40)
+
+        self.spinbox = tk.Spinbox(root,values=(64,256,512),width=15,command=self.on_spinbox_change)
+        self.spinbox.place(x=540, y=70)
 
     def run(self):
         # Inicia el bucle de eventos de la ventana  
         tk.mainloop()
-    # Crea una ventana y un objeto Piano
-    def connect(self):
-        midi_devices = mido.get_input_names()
-        print(midi_devices)
 
+    def mostrar_desplegable(self):
+        midi_devices = mido.get_input_names()
         if len(midi_devices) == 0:
             messagebox.showerror("Error", "No se encontraron dispositivos MIDI")
-
         else:
-            messagebox.showinfo("success", "Teclado "+midi_devices[0]+" conectado correctamente")
-            input_device = mido.open_input(midi_devices[0])
+            self.ventana = tk.Toplevel()
+            etiqueta = tk.Label(self.ventana, text="Selecciona una opción:")
+            etiqueta.pack()
+            self.seleccion = tk.StringVar()
+            self.seleccion.set(midi_devices[0])
+            desplegable = tk.OptionMenu(self.ventana, self.seleccion, *midi_devices)
+            desplegable.pack()
+            boton_confirmar = tk.Button(self.ventana, text="Confirmar", command=self.confirmar)
+            boton_confirmar.pack()
+            ancho_ventana = 200
+            altura_ventana = 100
+            x = root.winfo_x() + (root.winfo_width() - ancho_ventana) // 2
+            y = root.winfo_y() + (root.winfo_height() - altura_ventana) // 2
+            self.ventana.geometry(f"{ancho_ventana}x{altura_ventana}+{x}+{y}")
+    def confirmar(self):
+        if(self.input_device!=None):
+            self.input_device.close()
+        self.input_device = mido.open_input(self.seleccion.get())
+        my_thread = threading.Thread(target=piano.read_input_device)
+        my_thread.start()
+        self.ventana.destroy()
 
-            def read_input_device():
+    def mostrar_desplegable_modo(self):
+        self.opciones_modo=["sintetizador","sampler"]
+        self.ventana = tk.Toplevel()
+        etiqueta = tk.Label(self.ventana, text="Selecciona un modo:")
+        etiqueta.pack()
+        self.seleccion_modo = tk.StringVar()
+        self.seleccion_modo.set(self.opciones_modo[0])
+        desplegable = tk.OptionMenu(self.ventana, self.seleccion_modo, *self.opciones_modo)
+        desplegable.pack()
+        boton_confirmar_modo = tk.Button(self.ventana, text="Confirmar", command=self.confirmar_modo)
+        boton_confirmar_modo.pack()
+        ancho_ventana = 200
+        altura_ventana = 100
+        x = root.winfo_x() + (root.winfo_width() - ancho_ventana) // 2
+        y = root.winfo_y() + (root.winfo_height() - altura_ventana) // 2
+        self.ventana.geometry(f"{ancho_ventana}x{altura_ventana}+{x}+{y}")
 
-                for message in input_device:
-                    if message.type == 'note_on' and message.velocity > 0:
-                    # Llama a la función on_key_pressed con la nota correspondiente
-                        self.pulsado(message)
-                    elif message.type == 'note_on' and message.velocity == 0:
-                        self.soltado(message)
-                    # Aquí puedes definir cualquier acción que deba ocurrir cuando se libera una tecla
-                    threading.Thread(target=read_input_device).start()
+    def confirmar_modo(self):
+        if (self.seleccion_modo.get()==self.opciones_modo[0]):
+            print("xd")
+        else:
+            print("xd2")
+        self.ventana.destroy()
 
-    def on_key_pressed(self, key):
-        # Aquí puedes definir la acción que se debe realizar cuando se presiona la tecla 'key'
-        print(f"Tecla {key} pulsada")
+    def read_input_device(self):
+
+        for message in self.input_device:
+            if message.type == 'note_on' and message.velocity > 0:
+                self.pulsado(message)
+            elif message.type == 'note_on' and message.velocity == 0:
+                self.soltado(message)
+
+
     def pulsado(self, message):
         # Cambia el color del botón cuando se presiona
         print(message)
-        if(self.key_status[message.note % 12] == False):
+        if (self.key_status[message.note % 12] == False):
             self.key_status[message.note % 12] = True
             button = self.buttons[message.note % 12]
             self.KEY_COLORS[message.note % 12] = button.cget('bg')
             button.config(bg="red", activebackground="red")
-            mensaje=self.midi_to_chord(message.note)
+            mensaje = self.midi_to_chord(message.note)
             self.labels[message.note % 12].config(text=mensaje)
 
     def soltado(self, message):
         # Restaura el color original del botón
         print(message)
-        if(self.key_status[message.note % 12] == True):
+        if (self.key_status[message.note % 12] == True):
             self.key_status[message.note % 12] = False
             button = self.buttons[message.note % 12]
             button.config(bg=self.KEY_COLORS[message.note % 12], activebackground=self.KEY_COLORS[message.note % 12])
             self.labels[message.note % 12].config(text="")
 
-    def midi_to_chord(self,midi_note):
+    def midi_to_chord(self, midi_note):
         # Obtener el número de tono y el número de octava
         tone = midi_note % 12
         octave = midi_note // 12 - 1
-
         # Obtener el símbolo de acorde correspondiente
         chord_symbol = midi_to_chord2[tone]
-
         # Agregar el número de octava al símbolo de acorde
         chord_notation = f'{chord_symbol}{octave}'
 
         return chord_notation
 
+    def on_spinbox_change(self):
+
+        print("Spinbox value changed:", self.spinbox.get())
 
 root = tk.Tk()
 root.title("Piano Digital")
