@@ -5,7 +5,7 @@ from globals import CHUNK_SIZE, MODELS
 from view.components import Key, PopupWindow, create_modal_window
 
 # Diseño vetana piano
-WINDOW_WIDTH = 600
+WINDOW_WIDTH = 640
 WINDOW_HEIGHT = 300
 KEY_WIDTH = WINDOW_WIDTH // 14
 KEY_HEIGHT = int(WINDOW_HEIGHT * 0.75)
@@ -23,36 +23,42 @@ class Interface(tk.Tk):
     def __init__(self, controller):
         super().__init__()
         self.title("Python-midi-app")
+
+        x_right_panel = WINDOW_WIDTH - 100
+
         # Cargar el archivo de imagen desde el disco.
         icono = tk.PhotoImage(file="view/icono.png")
+
         # Establecerlo como ícono de la ventana.
         self.iconphoto(True, icono)
         self.controller = controller
         self.input_device = None
         self.midi_devices = controller.get_midi_devices()
+
         # Piano
-        self.piano = tk.Canvas(self, width=650, height=WINDOW_HEIGHT)
+        self.piano = tk.Canvas(self, width=WINDOW_WIDTH, height=WINDOW_HEIGHT)
         self.resizable(False, False)
         
         self.piano.pack()
         self.spinbox = tk.Spinbox(self.piano, values=[str(size) for size in CHUNK_SIZE], width=10,
                                   command=self.on_spinbox_change, state='readonly')
-        self.spinbox.place(x=540, y=70)
+        self.spinbox.place(x=x_right_panel, y=70)
+
         # Keys
         self.keys = self.__create_keys__()
 
         # Selector midi device
         self.midi_device_selection = None
         connect_button = tk.Button(self.piano, text="Conectar MIDI", command=self.window_select_midi)
-        connect_button.place(x=540, y=0)
+        connect_button.place(x=x_right_panel, y=0)
 
         # Selector modelo
         self.model_selection = self.controller.get_model_name()
         mode_button = tk.Button(self.piano, text="Modelo", command=self.window_select_model)
-        mode_button.place(x=540, y=100)
+        mode_button.place(x=x_right_panel, y=100)
 
         # Selector tamaño chunk
-        tk.Label(self.piano, text="chunk:", bg="white").place(x=540, y=40)
+        tk.Label(self.piano, text="chunk:", bg="white").place(x=x_right_panel, y=40)
 
         # Configurar cierre
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -61,13 +67,14 @@ class Interface(tk.Tk):
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
         width = WINDOW_WIDTH + 80
-        height = WINDOW_HEIGHT + 20
+        height = WINDOW_HEIGHT + 10
+
         # Calcular las coordenadas de la ventana para que se centre en la pantalla
         x = (screen_width // 2) - (width // 2)
         y = (screen_height // 2) - (height // 2)
 
         # Configurar la posición de la ventana en la pantalla
-        self.geometry('{}x{}+{}+{}'.format(650, WINDOW_HEIGHT, x, y))
+        self.geometry('{}x{}+{}+{}'.format(width , height, x, y))
 
     def __create_keys__(self):
         """
@@ -76,7 +83,7 @@ class Interface(tk.Tk):
         keys = {}
 
         for i in range(len(KEY_COLORS)):
-            x = i * KEY_WIDTH+25
+            x = i * KEY_WIDTH
             y = 0
             color = KEY_COLORS[i]
             keys[i] = Key(self.piano, color, False, KEY_WIDTH, KEY_HEIGHT)
