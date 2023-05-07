@@ -13,7 +13,7 @@ class MidiReader():
         self.input_device = None
 
     def open(self, midi_device:str):
-        self.input_device = mido.open_input(midi_device, callback= self.run)
+        self.input_device = mido.open_input(midi_device, callback= self.__run__)
 
     def close(self):
         if self.input_device is not None:
@@ -23,7 +23,7 @@ class MidiReader():
             print("Midi close")
 
 
-    def run(self, msg):
+    def __run__(self, msg):
 
         print(msg)
         if msg.type == 'note_on':

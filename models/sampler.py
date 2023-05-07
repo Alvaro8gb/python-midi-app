@@ -2,7 +2,6 @@ import os
 import numpy as np
 from models.NoteFactory import NoteBase, Note
 import soundfile as sf
-from globals import CHUNK
 from models.utils import Spliter
 
 s = Spliter()
@@ -13,6 +12,8 @@ class Sampler(NoteBase):
     def __init__(self, note:Note, chunk_size):
 
         super().__init__(chunk_size)
+
+        self.chunk_size = chunk_size
 
         if Sampler.samples is None:
             Sampler.samples = Sampler.load_samples()
@@ -74,7 +75,7 @@ class Sampler(NoteBase):
         if self.buffer is None:
             return np.empty(0, dtype="float32")
 
-        chunk = np.roll(self.buffer, -self.pointer)[:CHUNK].astype('float32')
-        self.pointer = (self.pointer + CHUNK) % self.buff_size
+        chunk = np.roll(self.buffer, -self.pointer)[:self.chunk_size].astype('float32')
+        self.pointer = (self.pointer + self.chunk_size) % self.buff_size
 
         return chunk

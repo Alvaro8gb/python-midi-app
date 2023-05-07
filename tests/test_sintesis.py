@@ -3,43 +3,39 @@ import matplotlib.pyplot as plt
 from globals import NOTAS
 from out.player import Player
 from models.utils import Chunker
-from models.sintesis import KarplusStrong, Synthesizer
+from models.sintesis import KarplusStrong, finetune
 from models.NoteFactory import Note
 
-def static(p):
-    chunker = Chunker()
-    m = KarplusStrong()
+chunker = Chunker()
+m = KarplusStrong()
 
-    plt.plot(m.transform(Note(frequency=NOTAS["C"], duration=3, note=2, velocity=50)))
-    plt.savefig("onda")
-    notes = [ m.transform(Note(frequency=NOTAS["C"], duration=3, note=2, velocity=50)),
-             m.transform(Note(frequency=NOTAS["B"], duration=1, note=2, velocity=50))
-             ]
+notes = [Note(frequency=NOTAS["C"], duration=3, id=2, velocity=50),
+         Note(frequency=NOTAS["B"], duration=1, id=2, velocity=50)]
 
-    for n in notes:
-        for c in chunker.chunkerize(n):
+configurations = {"complex": m.complex,
+                  "basic": m.basic,
+                  "afinado": m.basic_fractional_delay
+                  }
+
+
+def play(p, func):
+    signals = [func(n) for n in notes]
+
+    for s in signals:
+        for c in chunker.chunkerize(s):
             p.play(c)
 
-
-def continuos(p):
-    i = 0
-
-    while True:
-        p.play(m.next())
-        i += 1
-
-        if i == 10000:
-            print("NOte off")
-            m.note_off()
-            break
-
-    p.play(m.next())
-
-
 if __name__ == '__main__':
-
     p = Player()
     p.start()
 
-    static(p)
+    print("Afinado")
+    play(p, configurations["afinado"])
+
+    print("Karpus Complejo")
+    play(p, configurations["complex"])
+
+    print("Basico")
+    play(p, configurations["basic"])
+
     p.close()

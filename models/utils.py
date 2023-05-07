@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.signal as signal
 
-from globals import CHUNK
+from globals import MAX_CHUNK
 from itertools import zip_longest
 
 
@@ -12,7 +12,7 @@ class Chunker:
         return zip_longest(*[iter(iterable)] * n, fillvalue=padvalue)
 
     def chunkerize(self, sample):
-        return [np.float32(chunk) for chunk in self.group_elements(CHUNK, sample)]
+        return [np.float32(chunk) for chunk in self.group_elements(MAX_CHUNK, sample)]
 
 
 class Spliter:

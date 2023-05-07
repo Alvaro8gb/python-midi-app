@@ -55,3 +55,6 @@ if __name__ == '__main__':
 
     controlador = Controller()
     controlador.start()
+
+    print("-"*30, "\n", "Closing app")
+

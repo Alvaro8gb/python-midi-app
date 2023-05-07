@@ -2,12 +2,12 @@
 import threading
 from models.NoteFactory import Note
 from models.sampler import Sampler
-from models.sintesis import Synthesizer
+from models.sintesis import SynthesizerBasic, SynthesizerTuned
 from out.player import Player
-from globals import CHUNK
+from globals import MAX_CHUNK
 
-id_to_model = {"sintetizador": 0, "sampler": 1}
-model_to_id = {0: "sintetizador", 1: "sampler"}
+id_to_model = {"sintetizador tunned": 0, "sintetizador basic": 1,  "sampler": 2}
+model_to_id = {0: "sintetizador tunned", 1: "sintetizador basic", 2: "sampler"}
 
 class Model:
 
@@ -25,7 +25,7 @@ class Model:
 
         self.model = 0
 
-        self.chunk_size = CHUNK
+        self.chunk_size = MAX_CHUNK
 
 
     def get_model_name(self):
@@ -65,7 +65,9 @@ class Model:
 
         with self.lock_parameters:
             if self.model == 0:
-                return Synthesizer(note, self.chunk_size)
+                return SynthesizerTuned(note, self.chunk_size)
+            elif self.model == 1:
+                return SynthesizerBasic(note, self.chunk_size)
             else:
                 return Sampler(note, self.chunk_size)
 
@@ -77,6 +79,4 @@ class Model:
     def stop_note(self, note:Note):
         with self.lock_playing_keys:
             self.playing_notes[note.id] = None
-
-
 
