@@ -7,8 +7,8 @@ class MidiReader():
         self.controller = controller
         self.running = False
 
-        if len(self.midi_devices) == 0:
-            raise Exception("No midi devices found")
+        #if len(self.midi_devices) == 0:
+            #raise Exception("No midi devices found")
 
         self.input_device = None
 

@@ -6,7 +6,7 @@ class Key:
     def __init__(self, canvas, color, status, key_width, key_height):
         self.status = status
         self.canvas = canvas
-        self.button = tk.Button(canvas, bg=color, activebackground=color,
+        self.button = tk.Button(self.canvas, bg=color, activebackground=color,
                                 borderwidth=1, highlightthickness=3, highlightbackground="black")
 
         self.label = tk.Label(self.canvas, text="", bg=COLOR_LABEL)
