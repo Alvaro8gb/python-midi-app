@@ -4,15 +4,23 @@ import tkinter.messagebox as messagebox
 from globals import CHUNK_SIZE, MODELS
 from view.components import Key, PopupWindow, create_modal_window
 
-# Diseño vetana piano
-WINDOW_WIDTH = 640
-WINDOW_HEIGHT = 300
-KEY_WIDTH = WINDOW_WIDTH // 14
-KEY_HEIGHT = int(WINDOW_HEIGHT * 0.75)
+# Diseño ventana principal
+WINDOW_HEIGHT = 400
+WINDOW_WIDTH = 800
+PADY = 5
+
+# Diseño de ventana configuraciones
+WINDOW_CONFS_HEIGHT = WINDOW_HEIGHT
+WINDOW_CONFS_WIDTH = 100
+
+# Diseño ventana piano
+WINDOW_PIANO_HEIGHT = WINDOW_HEIGHT
+WINDOW_PIANO_WIDTH = WINDOW_WIDTH - WINDOW_CONFS_WIDTH
+KEY_WIDTH = WINDOW_PIANO_WIDTH / 14
+KEY_HEIGHT = int(WINDOW_HEIGHT * 0.90)
 COLOR_PRESSED = "#ADD8E6"
 KEY_COLORS = ("white", "black", "white", "black", "white", "white", "black",
               "white", "black", "white", "black", "white")
-
 
 midi2chord = dict([(0, 'C'), (1, 'C#'), (2, 'D'), (3, 'D#'),
                    (4, 'E'), (5, 'F'), (6, 'F#'), (7, 'G'),
@@ -24,7 +32,8 @@ class Interface(tk.Tk):
         super().__init__()
         self.title("Python-midi-app")
 
-        x_right_panel = WINDOW_WIDTH - 100
+        main = tk.Frame(self)
+        main.pack(fill='both', expand=True)
 
         # Cargar el archivo de imagen desde el disco.
         icono = tk.PhotoImage(file="view/icono.png")
@@ -36,47 +45,53 @@ class Interface(tk.Tk):
         self.midi_devices = controller.get_midi_devices()
 
         # Piano
-        self.piano = tk.Canvas(self, width=WINDOW_WIDTH, height=WINDOW_HEIGHT)
-        self.resizable(False, False)
-        
-        self.piano.pack()
-        self.spinbox = tk.Spinbox(self.piano, values=[str(size) for size in CHUNK_SIZE], width=10,
-                                  command=self.on_spinbox_change, state='readonly')
-        self.spinbox.place(x=x_right_panel, y=70)
+        piano_frame = tk.Frame(main, width=WINDOW_PIANO_WIDTH, height=WINDOW_PIANO_HEIGHT)
+        piano_frame.pack(side="left", fill='both', expand=True)
 
         # Keys
-        self.keys = self.__create_keys__()
+        self.keys = self.__create_keys__(piano_frame)
+
+        # Menu configuraciones
+        configs_frame = tk.Frame(main, width=WINDOW_CONFS_WIDTH, height=WINDOW_CONFS_HEIGHT)
+        configs_frame.pack(side='left', fill='both', expand=True)
+
 
         # Selector midi device
         self.midi_device_selection = None
-        connect_button = tk.Button(self.piano, text="Conectar MIDI", command=self.window_select_midi)
-        connect_button.place(x=x_right_panel, y=0)
-
+        connect_button = tk.Button(configs_frame, text="Conectar MIDI", command=self.window_select_midi)
+        connect_button.pack(side='top', pady=PADY)
         # Selector modelo
         self.model_selection = self.controller.get_model_name()
-        mode_button = tk.Button(self.piano, text="Modelo", command=self.window_select_model)
-        mode_button.place(x=x_right_panel, y=100)
+        mode_button = tk.Button(configs_frame, text="Modelo", command=self.window_select_model)
+        mode_button.pack(side='top', pady=PADY)
 
         # Selector tamaño chunk
-        tk.Label(self.piano, text="chunk:", bg="white").place(x=x_right_panel, y=40)
+        chunk_frame = tk.Frame(configs_frame, width=WINDOW_CONFS_WIDTH, height=WINDOW_CONFS_HEIGHT)
+        label_chunk = tk.Label(chunk_frame, text="chunk:", bg="white")
+        label_chunk.pack(side='left', pady=PADY)
+
+        self.spinbox = tk.Spinbox(chunk_frame, values=[str(size) for size in CHUNK_SIZE], width=10,
+                                  command=self.on_spinbox_change, state='readonly')
+        self.spinbox.pack(side='right', pady=PADY)
+
+        chunk_frame.pack(side="top", pady=PADY)
 
         # Configurar cierre
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
+        self.resizable(False, False)
 
         # Centrar ventana principal
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
-        width = WINDOW_WIDTH + 80
-        height = WINDOW_HEIGHT + 10
 
         # Calcular las coordenadas de la ventana para que se centre en la pantalla
-        x = (screen_width // 2) - (width // 2)
-        y = (screen_height // 2) - (height // 2)
+        x = (screen_width // 2) - (WINDOW_WIDTH // 2)
+        y = (screen_height // 2) - (WINDOW_HEIGHT // 2)
 
         # Configurar la posición de la ventana en la pantalla
-        self.geometry('{}x{}+{}+{}'.format(width , height, x, y))
+        self.geometry('{}x{}+{}+{}'.format(WINDOW_WIDTH, WINDOW_HEIGHT, x, y))
 
-    def __create_keys__(self):
+    def __create_keys__(self, piano_frame):
         """
         Crea los botones para cada tecla y los almacena en una lista
         """
@@ -86,7 +101,7 @@ class Interface(tk.Tk):
             x = i * KEY_WIDTH
             y = 0
             color = KEY_COLORS[i]
-            keys[i] = Key(self.piano, color, False, KEY_WIDTH, KEY_HEIGHT)
+            keys[i] = Key(piano_frame, color, False, KEY_WIDTH, KEY_HEIGHT)
             keys[i].place(x, y)
 
         return keys

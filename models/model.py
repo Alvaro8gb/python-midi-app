@@ -72,7 +72,6 @@ class Model:
                 return Sampler(note, self.chunk_size)
 
     def play_note(self, note:Note):
-
         with self.lock_playing_keys:
             self.playing_notes[note.id] = self.get_note(note)
 
