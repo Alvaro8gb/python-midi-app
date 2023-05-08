@@ -6,10 +6,6 @@ class MidiReader():
         self.midi_devices = mido.get_input_names()
         self.controller = controller
         self.running = False
-
-        if len(self.midi_devices) == 0:
-            raise Exception("No midi devices found")
-
         self.input_device = None
 
     def open(self, midi_device:str):
