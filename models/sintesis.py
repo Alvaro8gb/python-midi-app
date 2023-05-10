@@ -68,7 +68,7 @@ class KarplusStrong:
         buff_size = int(efs)  # tamaño del buffer
         buf = np.random.uniform(-1, 1, buff_size)  # buffer inicial: ruido
         nSamples = int(note.duration * SRATE)
-        samples = np.empty(nSamples, dtype=float)  # salida
+        samples = np.empty(nSamples, dtype="float32")  # salida
         pos = 0  # posición actual en el buffer
         for i in range(nSamples):
             n = pos
