@@ -71,13 +71,13 @@ class KarplusStrong:
         samples = np.empty(nSamples, dtype="float32")  # salida
         pos = 0  # posición actual en el buffer
         for i in range(nSamples):
-            n = pos
+            n = int(pos)
             tau = pos - n
             n1 = (n + 1) % buff_size
             y = (1 - tau) * buf[n] + tau * buf[n1]  # interpolación
             samples[i] = y
             buf[n] = 0.5 * (y + buf[n1])  # filtrado
-            pos = int((pos + interp_factor - delay) % buff_size) # avance en el buffer con interpolación y retardo
+            pos = (pos + interp_factor - delay) % buff_size# avance en el buffer con interpolación y retardo
 
         return samples
 
@@ -194,7 +194,7 @@ class SynthesizerTuned(Synthesizer):
 
         for i in range(self.chunk_size):
 
-            n = self.pointer
+            n = int(self.pointer)
             tau = self.pointer - n
             siguiente = self.buffer[(n + 1) % self.buff_size]
             y = (1 - tau) * self.buffer[n] + tau * siguiente  # interpolación
@@ -204,7 +204,7 @@ class SynthesizerTuned(Synthesizer):
             if self.attack_time > 0:  # Aplicar filtro solo si esta en fase de ataque
                 self.buffer[n] = 0.5 * (y + siguiente)  # filtrado
                 self.attack_time -= 1
-                self.pointer = int((self.pointer + SynthesizerTuned.interp_factor - SynthesizerTuned.delay) % self.buff_size)
+                self.pointer = (self.pointer + SynthesizerTuned.interp_factor - SynthesizerTuned.delay) % self.buff_size
             else:
                 self.pointer = (self.pointer + 1) % self.buff_size
 
