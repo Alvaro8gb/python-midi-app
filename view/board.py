@@ -1,6 +1,6 @@
 import tkinter as tk
 import tkinter.messagebox as messagebox
-
+import mido
 from globals import CHUNK_SIZE, MODELS
 from view.components import Key, PopupWindow, create_modal_window
 
@@ -126,10 +126,11 @@ class Interface(tk.Tk):
         self.wait_window(popup.popup_window)
 
     def window_select_midi(self):
-
+        self.midi_devices = mido.get_input_names()
         if len(self.midi_devices) == 0:
             messagebox.showerror("Error", "No se encontraron dispositivos MIDI")
         else:
+
             window = create_modal_window(self, "Seleciona conector")
             etiqueta = tk.Label(window, text="Selecciona una opción:")
             etiqueta.pack()
